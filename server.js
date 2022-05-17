@@ -12,7 +12,7 @@ app.get('/', (request, response) => {
   response.send('pog.com');
 });
 
-app.get('/weather', (req, res) => {
+app.get('/weather', (req, res, next) => {
   try {
     const city = req.query.type;
     const queryResults = new Forecast(city);
@@ -20,6 +20,7 @@ app.get('/weather', (req, res) => {
   } catch (error) {
     error.customMessage = `Something's wrong with your API call`;
     console.log(error.customMessage + error);
+    next(error)
   }
 });
 
@@ -33,5 +34,7 @@ class Forecast {
 
 
 
-
+app.use((error, request, response, next) =>{
+  response.status(500).send(`Service failure: ${error.customMessage}`);
+});
 app.listen(PORT, () => console.log(`listening on ${PORT}`));
