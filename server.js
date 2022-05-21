@@ -12,17 +12,22 @@ app.get('/', (request, response) => {
   response.send('Working');
 });
 
-app.get('/weather', async (req, res) => {
+app.get('/weather', async (req, res, next) => {
+  try {
     console.log('getting weather');
-    const lat = req.query.lat;
-    const lon =  req.query.lon;
+    const { lat, lon } = req.query;
     const url = `https://api.weatherbit.io/v2.0/forecast/daily?key=${process.env.WEATHER_KEY}&lang=en&units=I&lat=${lat}&lon=${lon}&days=3`;
     const response = await axios.get(url);
     const queryResults = response.data.data.map(day => new Forecast(day));
     res.status(200).send(queryResults);
+  } catch (error) {
+    error.customMessage = 'API fail from weather.';
+    next(error);
+  }
 });
 
-app.get('/movie', async (req, res) => {
+app.get('/movie', async (req, res, next) => {
+  try {
     console.log('getting movie');
     let search = req.query.search;
     search = search.split(',')[0];
@@ -31,6 +36,10 @@ app.get('/movie', async (req, res) => {
     console.log(response.data);
     const queryResults = response.data.results.map(movie => new Movie(movie));
     res.status(200).send(queryResults);
+  } catch (error) {
+    error.customMessage = 'API fail from movie.';
+    next(error);
+  }
 });
 
 class Forecast {
@@ -44,6 +53,11 @@ class Movie {
   constructor(movie) {
     this.title = movie.title;
     this.description = movie.overview;
+    this.poster = 'https://image.tmdb.org/t/p/w500' + movie.poster_path;
+    this.avgVotes = movie.vote_average;
+    this.totalVotes = movie.vote_count;
+    this.popularity = movie.popularity;
+    this.release = movie.release_date;
   };
 };
 
