@@ -1,18 +1,23 @@
 const axios = require('axios');
+let cache = require('./cache.js');
 
 function getMovie(request, response) {
-  console.log('getting movie');
-  let search = request.query.search.split(',')[0];
-  console.log(search);
-  const url = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_KEY}&query=${search}`;
-  axios.get(url)
-    .then(res => {
-      const queryResults = res.data.results.map(movie => new Movie(movie));
-      response.status(200).send(queryResults)
-    })
-    .catch(error => {
-      response.status(500).send(`Server error in getMovie: ${error}`)
-    });
+  const incoming = request.query.search.split(',')[0];
+  const key = 'my-key:' + incoming;
+  if (cache[key] && (Date.now() - cache[key].timestamp < 50000)) {
+    console.log('Cache hit');
+    return cache[key].data; // key is request.query.search
+  } else {
+    console.log('Cache miss');
+    cache[key] = {};// recipeArr is var storing the mapped class(s)
+    cache[key].timestamp = Date.now();
+    axios.get(`https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_KEY}&query=${incoming}`)
+      .then(res => {
+        const movieArr = res.data.results.map(movie => new Movie(movie))
+        cache[key].data = movieArr;
+        response.status(200).send(movieArr)
+      }).catch(error => response.status(500).send(`Server error in getMovie: ${error}`))
+  };
 }
 
 class Movie {
