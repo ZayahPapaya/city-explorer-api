@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 3002;
 const getWeather = require('./weather');
 const notFound = require('./notFound')
 const getMovie = require('./movie');
+const cache = require ('./cache')
 app.get('/', (request, response) => { response.send('Working')});
 app.get('/weather', getWeather);
 app.get('/movie', getMovie);
